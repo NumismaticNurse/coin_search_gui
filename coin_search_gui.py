@@ -55,4 +55,5 @@ if uploaded_file:
         if "Variety" not in df.columns:
             st.error("The file must contain a column named 'Variety'.")
         else:
-            varieties = df["Variety]()
+            varieties = df["Variety"].dropna().tolist()
+
