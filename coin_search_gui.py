@@ -99,6 +99,14 @@ with pd.ExcelWriter(output, engine='openpyxl') as writer:
     df_out.to_excel(writer, index=False)
 output.seek(0)
 
+from io import BytesIO
+
+# Create Excel file in memory
+output = BytesIO()
+with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    df_out.to_excel(writer, index=False)
+output.seek(0)
+
 # Streamlit download button
 st.download_button(
     label="📥 Download Results as Excel",
@@ -106,6 +114,7 @@ st.download_button(
     file_name="coin_search_results.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
     except Exception as e:
         st.error(f"Failed to load file: {e}")
 else:
