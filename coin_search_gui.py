@@ -3,9 +3,19 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import time
+from io import BytesIO
+from PIL import Image
 
+# --- Streamlit Setup ---
 st.set_page_config(page_title="Coin Search Tool", layout="wide")
 st.title("🪙 Coin Search Across Auction Sites")
+
+# --- Optional Logo ---
+try:
+    logo = Image.open("Numismatic Nurse logo (150 x 150 px).PNG")
+    st.image(logo, use_column_width=False, width=300)
+except:
+    pass  # Skip if logo doesn't exist
 
 # --- Helper Functions ---
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -35,7 +45,7 @@ def search_vcoins(query):
     soup = BeautifulSoup(requests.get(url, headers=HEADERS).text, "html.parser")
     return [item.text.strip() for item in soup.select(".item-title")[:5] if item.text.strip()]
 
-# --- App Interface ---
+# --- Upload Spreadsheet ---
 uploaded_file = st.file_uploader("Upload your Excel file with a 'Variety' column", type=["xlsx"])
 
 if uploaded_file:
@@ -90,31 +100,18 @@ if uploaded_file:
                 df_out = pd.DataFrame(results)
                 st.dataframe(df_out)
 
-                # Provide download
-                from io import BytesIO
+                # --- Excel Export ---
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_out.to_excel(writer, index=False)
+                output.seek(0)
 
-# Create Excel file in memory
-output = BytesIO()
-with pd.ExcelWriter(output, engine='openpyxl') as writer:
-    df_out.to_excel(writer, index=False)
-output.seek(0)
-
-from io import BytesIO
-
-# Create Excel file in memory
-output = BytesIO()
-with pd.ExcelWriter(output, engine='openpyxl') as writer:
-    df_out.to_excel(writer, index=False)
-output.seek(0)
-
-# Streamlit download button
-st.download_button(
-    label="📥 Download Results as Excel",
-    data=output,
-    file_name="coin_search_results.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
-
+                st.download_button(
+                    label="📥 Download Results as Excel",
+                    data=output,
+                    file_name="coin_search_results.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
     except Exception as e:
         st.error(f"Failed to load file: {e}")
 else:
