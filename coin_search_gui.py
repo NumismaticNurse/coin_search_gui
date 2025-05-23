@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import time
 from io import BytesIO
 from PIL import Image
+import concurrent.futures
 
 # --- Streamlit Setup ---
 st.set_page_config(page_title="Coin Search Tool", layout="wide")
@@ -12,10 +13,10 @@ st.title("🪙 Coin Search Across Auction Sites")
 
 # --- Optional Logo ---
 try:
-    logo = Image.open("Numismatic Nurse logo (150 x 150 px).PNG")
+    logo = Image.open("Numismatic Nurse logo (150 x 150 px).png")
     st.image(logo, use_column_width=False, width=300)
 except:
-    pass  # Skip if logo doesn't exist
+    pass  # Skip if logo not found
 
 # --- Helper Functions ---
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -45,7 +46,7 @@ def search_vcoins(query):
     soup = BeautifulSoup(requests.get(url, headers=HEADERS).text, "html.parser")
     return [item.text.strip() for item in soup.select(".item-title")[:5] if item.text.strip()]
 
-# --- Upload Spreadsheet ---
+# --- File Upload ---
 uploaded_file = st.file_uploader("Upload your Excel file with a 'Variety' column", type=["xlsx"])
 
 if uploaded_file:
@@ -54,65 +55,4 @@ if uploaded_file:
         if "Variety" not in df.columns:
             st.error("The file must contain a column named 'Variety'.")
         else:
-            varieties = df["Variety"].dropna().tolist()
-
-            st.success(f"Loaded {len(varieties)} varieties.")
-            sites = st.multiselect("Select auction sites to search:", [
-                "eBay", "Heritage Auctions", "GreatCollections", "MA-Shops", "VCoins"
-            ], default=["eBay", "Heritage Auctions"])
-
-            if st.button("Start Search"):
-                st.info("Searching, please wait...")
-                search_funcs = {
-                    "eBay": search_ebay,
-                    "Heritage Auctions": search_heritage,
-                    "GreatCollections": search_greatcollections,
-                    "MA-Shops": search_ma_shops,
-                    "VCoins": search_vcoins
-                }
-
-                results = []
-                progress = st.progress(0)
-                total = len(varieties) * len(sites)
-                count = 0
-
-                for variety in varieties:
-                    for site in sites:
-                        try:
-                            listings = search_funcs[site](variety)
-                            for listing in listings:
-                                results.append({
-                                    "Variety": variety,
-                                    "Auction Site": site,
-                                    "Listing": listing
-                                })
-                        except Exception as e:
-                            results.append({
-                                "Variety": variety,
-                                "Auction Site": site,
-                                "Listing": f"Error: {e}"
-                            })
-                        count += 1
-                        progress.progress(count / total)
-                        time.sleep(1.5)
-
-                st.success("Search completed.")
-                df_out = pd.DataFrame(results)
-                st.dataframe(df_out)
-
-                # --- Excel Export ---
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_out.to_excel(writer, index=False)
-                output.seek(0)
-
-                st.download_button(
-                    label="📥 Download Results as Excel",
-                    data=output,
-                    file_name="coin_search_results.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-    except Exception as e:
-        st.error(f"Failed to load file: {e}")
-else:
-    st.warning("Please upload a spreadsheet to begin.")
+            varieties = df["Variet]()
