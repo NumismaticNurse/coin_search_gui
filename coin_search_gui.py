@@ -91,12 +91,21 @@ if uploaded_file:
                 st.dataframe(df_out)
 
                 # Provide download
-                st.download_button(
-                    label="📥 Download Results as Excel",
-                    data=df_out.to_excel(index=False, engine='openpyxl'),
-                    file_name="coin_search_results.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                from io import BytesIO
+
+# Create Excel file in memory
+output = BytesIO()
+with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    df_out.to_excel(writer, index=False)
+output.seek(0)
+
+# Streamlit download button
+st.download_button(
+    label="📥 Download Results as Excel",
+    data=output,
+    file_name="coin_search_results.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
     except Exception as e:
         st.error(f"Failed to load file: {e}")
 else:
